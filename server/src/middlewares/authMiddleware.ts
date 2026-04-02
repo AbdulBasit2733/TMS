@@ -13,10 +13,21 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
   }
 
   const token = authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Unauthorized: Missing token' });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET as string) as { userId: string };
-    req.userId = decoded.userId;
+    const secret = process.env.JWT_ACCESS_SECRET;
+    if (!secret) {
+      res.status(500).json({ error: 'JWT_ACCESS_SECRET is not configured' });
+      return;
+    }
+
+    const decoded = jwt.verify(token, secret);
+    if (typeof decoded !== 'object' || decoded === null || !('userId' in decoded)) {
+      return res.status(401).json({ error: 'Unauthorized: Invalid token payload' });
+    }
+
+    req.userId = (decoded as { userId: string }).userId;
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Unauthorized: Invalid or expired token' });

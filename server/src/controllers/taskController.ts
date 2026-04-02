@@ -1,37 +1,37 @@
 import { Response } from 'express';
 import { prisma } from '../utils/prisma';
 import { AuthRequest } from '../middlewares/authMiddleware';
-import { z } from 'zod';
+import { TASK_STATUS, PRIORITY } from '@prisma/client';
+import { CreateTaskData, UpdateTaskData, TaskWhereClause } from '../types/tasks.types';
+import { firstQueryString, getParam } from '../helpers/tasks/task-helper';
+import { taskSchema } from '../validations/task.validations';
 
-const taskSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-  status: z.enum(['PENDING', 'COMPLETED']).optional(),
-});
 
-export const getTasks = async (req: AuthRequest, res: Response) => {
+export const getTasks = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId!;
-    const { page = '1', limit = '10', status, search } = req.query;
+    const pageRaw = firstQueryString(req.query.page);
+    const limitRaw = firstQueryString(req.query.limit);
+    const statusRaw = firstQueryString(req.query.status);
+    const search = firstQueryString(req.query.search);
 
-    const pageNumber = parseInt(page as string, 10);
-    const pageSize = parseInt(limit as string, 10);
+    const pageNumber = Math.max(1, parseInt(pageRaw ?? '1', 10));
+    const pageSize = Math.min(100, Math.max(1, parseInt(limitRaw ?? '10', 10)));
     const skip = (pageNumber - 1) * pageSize;
 
-    const whereClause: any = { userId };
-    if (status) whereClause.status = status;
+    const where: TaskWhereClause = { userId };
+
+    if (statusRaw && Object.values(TASK_STATUS).includes(statusRaw as TASK_STATUS)) {
+      where.status = statusRaw as TASK_STATUS;
+    }
     if (search) {
-      whereClause.title = { contains: search as string, mode: 'insensitive' };
+      where.title = { contains: search, mode: 'insensitive' };
     }
 
-    const tasks = await prisma.task.findMany({
-      where: whereClause,
-      skip,
-      take: pageSize,
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const total = await prisma.task.count({ where: whereClause });
+    const [tasks, total] = await prisma.$transaction([
+      prisma.task.findMany({ where, skip, take: pageSize, orderBy: { createdAt: 'desc' } }),
+      prisma.task.count({ where }),
+    ]);
 
     res.status(200).json({
       tasks,
@@ -39,99 +39,141 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
       page: pageNumber,
       totalPages: Math.ceil(total / pageSize),
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-export const createTask = async (req: AuthRequest, res: Response) => {
+export const createTask = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId!;
     const parsed = taskSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid payload' });
+      return;
+    }
 
-    const task = await prisma.task.create({
-      data: {
-        ...parsed.data,
-        userId,
-      },
-    });
+    const data: CreateTaskData = {
+      title: parsed.data.title,
+      userId,
+      startDate: parsed.data.startDate ?? new Date(),
+      endDate: parsed.data.endDate ?? new Date(),
+      targetDate: parsed.data.targetDate ?? new Date(),
+      description: parsed.data.description ?? null,
+      ...(parsed.data.status !== undefined && { status: parsed.data.status }),
+      ...(parsed.data.priority !== undefined && { priority: parsed.data.priority }),
+    };
 
+    const task = await prisma.task.create({ data });
     res.status(201).json(task);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-export const getTaskById = async (req: AuthRequest, res: Response) => {
+export const getTaskById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId!;
-    const { id } = req.params;
+    const id = getParam(req, 'id');
+    if (!id) {
+      res.status(400).json({ error: 'Task id is required' });
+      return;
+    }
 
     const task = await prisma.task.findUnique({ where: { id } });
-    if (!task || task.userId !== userId) return res.status(404).json({ error: 'Task not found' });
+    if (!task || task.userId !== userId) {
+      res.status(404).json({ error: 'Task not found' });
+      return;
+    }
 
     res.status(200).json(task);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-export const updateTask = async (req: AuthRequest, res: Response) => {
+export const updateTask = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId!;
-    const { id } = req.params;
+    const id = getParam(req, 'id');
+    if (!id) {
+      res.status(400).json({ error: 'Task id is required' });
+      return;
+    }
 
     const parsed = taskSchema.partial().safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.errors[0].message });
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid payload' });
+      return;
+    }
 
-    const existingTask = await prisma.task.findUnique({ where: { id } });
-    if (!existingTask || existingTask.userId !== userId) return res.status(404).json({ error: 'Task not found' });
+    const existing = await prisma.task.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      res.status(404).json({ error: 'Task not found' });
+      return;
+    }
 
-    const task = await prisma.task.update({
-      where: { id },
-      data: parsed.data,
-    });
+    const data: UpdateTaskData = {
+      ...(parsed.data.title !== undefined && { title: parsed.data.title }),
+      ...(parsed.data.description !== undefined && { description: parsed.data.description }),
+      ...(parsed.data.status !== undefined && { status: parsed.data.status }),
+      ...(parsed.data.priority !== undefined && { priority: parsed.data.priority }),
+      ...(parsed.data.startDate !== undefined && { startDate: parsed.data.startDate }),
+      ...(parsed.data.endDate !== undefined && { endDate: parsed.data.endDate }),
+      ...(parsed.data.targetDate !== undefined && { targetDate: parsed.data.targetDate }),
+    };
 
+    const task = await prisma.task.update({ where: { id }, data });
     res.status(200).json(task);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-export const deleteTask = async (req: AuthRequest, res: Response) => {
+export const deleteTask = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId!;
-    const { id } = req.params;
+    const id = getParam(req, 'id');
+    if (!id) {
+      res.status(400).json({ error: 'Task id is required' });
+      return;
+    }
 
-    const existingTask = await prisma.task.findUnique({ where: { id } });
-    if (!existingTask || existingTask.userId !== userId) return res.status(404).json({ error: 'Task not found' });
+    const existing = await prisma.task.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      res.status(404).json({ error: 'Task not found' });
+      return;
+    }
 
     await prisma.task.delete({ where: { id } });
-
     res.status(200).json({ message: 'Task deleted successfully' });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-export const toggleTaskStatus = async (req: AuthRequest, res: Response) => {
+export const toggleTaskStatus = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId!;
-    const { id } = req.params;
+    const id = getParam(req, 'id');
+    if (!id) {
+      res.status(400).json({ error: 'Task id is required' });
+      return;
+    }
 
-    const existingTask = await prisma.task.findUnique({ where: { id } });
-    if (!existingTask || existingTask.userId !== userId) return res.status(404).json({ error: 'Task not found' });
+    const existing = await prisma.task.findUnique({ where: { id } });
+    if (!existing || existing.userId !== userId) {
+      res.status(404).json({ error: 'Task not found' });
+      return;
+    }
 
-    const newStatus = existingTask.status === 'PENDING' ? 'COMPLETED' : 'PENDING';
+    const newStatus: TASK_STATUS = existing.status === TASK_STATUS.PENDING
+      ? TASK_STATUS.COMPLETED
+      : TASK_STATUS.PENDING;
 
-    const task = await prisma.task.update({
-      where: { id },
-      data: { status: newStatus },
-    });
-
+    const task = await prisma.task.update({ where: { id }, data: { status: newStatus } });
     res.status(200).json(task);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Internal server error' });
   }
 };

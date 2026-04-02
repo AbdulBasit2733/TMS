@@ -3,17 +3,15 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { prisma } from "../utils/prisma";
 import { z } from "zod";
-
-const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
+import { loginSchema, registerSchema } from "../validations/auth.validations";
 
 export const register = async (req: Request, res: Response) => {
   try {
     const parsed = registerSchema.safeParse(req.body);
     if (!parsed.success)
-      return res.status(400).json({ error: parsed.error.errors[0].message });
+      return res
+        .status(400)
+        .json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" });
     const { email, password } = parsed.data;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -25,17 +23,24 @@ export const register = async (req: Request, res: Response) => {
       data: { email, password: hashedPassword },
     });
 
+
     res
       .status(201)
       .json({ message: "User registered successfully", userId: user.id });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const parsed = loginSchema.safeParse(req.body);
+    if (!parsed.success)
+      return res
+        .status(400)
+        .json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" });
+    const { email, password } = parsed.data;
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
