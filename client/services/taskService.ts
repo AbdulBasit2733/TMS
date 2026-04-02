@@ -14,6 +14,11 @@ export const taskService = {
       total: number;
       page: number;
       totalPages: number;
+      stats: {
+        total: number;
+        pending: number;
+        completed: number;
+      };
     };
   },
 

@@ -36,11 +36,11 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const {
     tasks,
-    total,
     page,
     totalPages,
     loading,
     filters,
+    stats,
     setSearch,
     setStatus,
     setPage,
@@ -69,33 +69,27 @@ export default function DashboardPage() {
       ? tasks
       : tasks.filter((t) => t.assignments.some((a) => a.userId === user?.id))
 
-  const pending = visibleTasks.filter((t) => t.status === "PENDING").length
-  const completed = visibleTasks.filter((t) => t.status === "COMPLETED").length
-
-  const stats = [
+  const statsData = [
     {
       label: "Total Tasks",
-      value: visibleTasks.length,
+      value: stats.total,
       icon: ClipboardList,
-      // 10% orange — this is the brand moment on the page
       valueCls: "text-primary",
       bgCls: "bg-primary/10",
       iconCls: "text-primary",
     },
     {
       label: "Pending",
-      value: pending,
+      value: stats.pending,
       icon: Clock,
-      // amber — close to orange family, doesn't clash
       valueCls: "text-amber-600 dark:text-amber-400",
       bgCls: "bg-amber-500/10",
       iconCls: "text-amber-500",
     },
     {
       label: "Completed",
-      value: completed,
+      value: stats.completed,
       icon: CheckCircle2,
-      // teal/emerald — complementary to orange on the color wheel
       valueCls: "text-emerald-600 dark:text-emerald-400",
       bgCls: "bg-emerald-500/10",
       iconCls: "text-emerald-500",
@@ -104,7 +98,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-5 px-1">
-      {/* ── Header ───────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-0.5">
           <h1 className="text-xl font-semibold tracking-tight">Tasks</h1>
@@ -113,7 +106,6 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Primary CTA — brand orange via --primary */}
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="h-9 gap-1.5 px-4">
@@ -121,7 +113,7 @@ export default function DashboardPage() {
               New Task
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="bg-card">
             <DialogHeader>
               <DialogTitle>Create Task</DialogTitle>
             </DialogHeader>
@@ -130,14 +122,12 @@ export default function DashboardPage() {
         </Dialog>
       </div>
 
-      {/* ── Stats ────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {stats.map((s) => (
+        {statsData.map((s) => (
           <div
             key={s.label}
-            className="flex items-center gap-4 rounded-xl border bg-card px-4 py-3.5 shadow-sm transition-shadow hover:shadow-md"
+            className="flex items-center gap-4 rounded-xl border bg-card px-4 py-3.5 shadow-sm transition-all duration-200 hover:border-primary/20 hover:shadow-md"
           >
-            {/* Icon badge — tinted with the stat's accent color */}
             <div
               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${s.bgCls}`}
             >
@@ -157,21 +147,15 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* ── Filters & Tabs ───────────────────────────────────── */}
       <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-        {/* Tab bar — underline indicator uses --primary (orange) */}
-        <div className="flex items-center gap-0.5 border-b px-3">
+        <div className="flex items-center gap-0.5 border-b bg-card px-3">
           {(["all", "assigned"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setViewTab(tab)}
               className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${
                 viewTab === tab
-                  ? [
-                      "text-primary",
-                      "after:absolute after:inset-x-2 after:bottom-0",
-                      "after:h-0.5 after:rounded-t-full after:bg-primary",
-                    ].join(" ")
+                  ? "text-primary after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-t-full after:bg-primary"
                   : "text-muted-foreground hover:text-foreground"
               } `}
             >
@@ -180,13 +164,12 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Search + status filter */}
-        <div className="flex flex-col gap-2.5 p-3 sm:flex-row">
+        <div className="flex flex-col gap-2.5 bg-background/60 p-3 sm:flex-row">
           <div className="relative flex-1">
             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search tasks…"
-              className="h-9 pl-9 text-sm"
+              className="h-9 bg-card pl-9 text-sm"
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
@@ -197,21 +180,19 @@ export default function DashboardPage() {
               setStatus(v === "ALL" ? "" : (v as TaskStatus))
             }
           >
-            <SelectTrigger className="h-9 w-full text-sm sm:w-44">
+            <SelectTrigger className="h-9 w-full bg-card text-sm sm:w-44">
               <SelectValue placeholder="Filter status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All statuses</SelectItem>
               <SelectItem value="PENDING">
                 <span className="flex items-center gap-2">
-                  {/* amber dot — matches pending stat card */}
                   <span className="h-2 w-2 rounded-full bg-amber-500" />
                   Pending
                 </span>
               </SelectItem>
               <SelectItem value="COMPLETED">
                 <span className="flex items-center gap-2">
-                  {/* emerald dot — matches completed stat card */}
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
                   Completed
                 </span>
@@ -221,19 +202,16 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Content ──────────────────────────────────────────── */}
       {loading ? (
         <div className="flex items-center justify-center py-24">
           <div className="flex flex-col items-center gap-3">
-            {/* Spinner uses --primary → orange */}
             <Loader2 className="h-7 w-7 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Loading tasks…</p>
           </div>
         </div>
       ) : visibleTasks.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-xl border bg-card py-20 text-center shadow-sm">
-          {/* Empty icon tinted with primary/10 */}
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent">
             <ClipboardList className="h-6 w-6 text-primary" />
           </div>
           <p className="mt-2 font-semibold">
@@ -276,7 +254,7 @@ export default function DashboardPage() {
           <Button
             variant="outline"
             size="sm"
-            className="h-8 px-3"
+            className="h-8 px-3 hover:bg-accent hover:text-accent-foreground"
             disabled={page === 1}
             onClick={() => setPage(page - 1)}
           >
@@ -290,7 +268,7 @@ export default function DashboardPage() {
           <Button
             variant="outline"
             size="sm"
-            className="h-8 px-3"
+            className="h-8 px-3 hover:bg-accent hover:text-accent-foreground"
             disabled={page === totalPages}
             onClick={() => setPage(page + 1)}
           >
@@ -301,7 +279,7 @@ export default function DashboardPage() {
 
       {/* ── Edit Dialog ──────────────────────────────────────── */}
       <Dialog open={!!editTask} onOpenChange={(o) => !o && setEditTask(null)}>
-        <DialogContent>
+        <DialogContent className="bg-card">
           <DialogHeader>
             <DialogTitle>Edit Task</DialogTitle>
           </DialogHeader>

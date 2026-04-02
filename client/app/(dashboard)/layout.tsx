@@ -14,7 +14,6 @@ export default function DashboardLayout({
   const router = useRouter()
 
   useEffect(() => {
-    // After silent refresh attempt completes, redirect if not authenticated
     if (!isLoading && !isAuthenticated) router.replace("/login")
   }, [isAuthenticated, isLoading, router])
 

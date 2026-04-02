@@ -22,34 +22,74 @@ const taskInclude = {
 
 export const getTasks = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const pageRaw = firstQueryString(req.query.page);
-    const limitRaw = firstQueryString(req.query.limit);
-    const statusRaw = firstQueryString(req.query.status);
-    const search = firstQueryString(req.query.search);
+    const pageRaw    = firstQueryString(req.query.page);
+    const limitRaw   = firstQueryString(req.query.limit);
+    const statusRaw  = firstQueryString(req.query.status);
+    const search     = firstQueryString(req.query.search);
 
     const pageNumber = Math.max(1, parseInt(pageRaw ?? '1', 10));
-    const pageSize = Math.min(100, Math.max(1, parseInt(limitRaw ?? '10', 10)));
-    const skip = (pageNumber - 1) * pageSize;
+    const pageSize   = Math.min(100, Math.max(1, parseInt(limitRaw ?? '10', 10)));
+    const skip       = (pageNumber - 1) * pageSize;
 
-    const where: TaskWhereClause = {};
+    // ── Filtered where clause (table + pagination) ──────────
+    const filteredWhere: TaskWhereClause = {};
 
     if (statusRaw && Object.values(TASK_STATUS).includes(statusRaw as TASK_STATUS)) {
-      where.status = statusRaw as TASK_STATUS;
+      filteredWhere.status = statusRaw as TASK_STATUS;
     }
     if (search) {
-      where.title = { contains: search, mode: 'insensitive' };
+      filteredWhere.title = { contains: search, mode: 'insensitive' };
     }
 
-    const [tasks, total] = await prisma.$transaction([
-      prisma.task.findMany({ where, skip, take: pageSize, orderBy: { createdAt: 'desc' }, include: taskInclude }),
-      prisma.task.count({ where }),
+    // ── Global where clause (stats — never changes) ──────────
+    // No status filter, no search — always reflects ALL tasks
+    const globalWhere: TaskWhereClause = {};
+
+    const [
+      tasks,
+      total,               // filtered total (for pagination)
+      globalTotal,         // all tasks regardless of filters
+      globalPending,       // always PENDING count
+      globalCompleted,     // always COMPLETED count
+    ] = await prisma.$transaction([
+      // 1. Filtered task list
+      prisma.task.findMany({
+        where: filteredWhere,
+        skip,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' },
+        include: taskInclude,
+      }),
+
+      // 2. Filtered count (drives pagination)
+      prisma.task.count({ where: filteredWhere }),
+
+      // 3. Global total — unaffected by search/status
+      prisma.task.count({ where: globalWhere }),
+
+      // 4. Global pending — unaffected by search/status
+      prisma.task.count({
+        where: { ...globalWhere, status: TASK_STATUS.PENDING },
+      }),
+
+      // 5. Global completed — unaffected by search/status
+      prisma.task.count({
+        where: { ...globalWhere, status: TASK_STATUS.COMPLETED },
+      }),
     ]);
 
     res.status(200).json({
+      // ── Table data (changes with filters) ──
       tasks,
       total,
       page: pageNumber,
       totalPages: Math.ceil(total / pageSize),
+
+      stats: {
+        total:     globalTotal,
+        pending:   globalPending,
+        completed: globalCompleted,
+      },
     });
   } catch {
     res.status(500).json({ error: 'Internal server error' });

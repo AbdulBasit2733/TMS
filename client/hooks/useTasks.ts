@@ -18,6 +18,8 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     page: 1,
     totalPages: 1,
   })
+  const [stats, setStats] = useState({ total: 0, pending: 0, completed: 0 })
+
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<TaskFilters>({
     page: 1,
@@ -38,6 +40,7 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
         page: res.page,
         totalPages: res.totalPages,
       })
+      setStats(res.stats)
     } catch {
       toast.error('Failed to load tasks')
     } finally {
@@ -180,6 +183,7 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     totalPages: state.totalPages,
     loading,
     filters,
+    stats,
     setSearch,
     setStatus,
     setPage,
