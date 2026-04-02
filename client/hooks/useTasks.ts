@@ -144,6 +144,35 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     [fetchTasks]
   )
 
+  const searchAssignableUsers = useCallback(async (taskId: string, search?: string) => {
+    const res = await taskService.searchAssignableUsers(taskId, search, 10)
+    return res.users
+  }, [])
+
+  const assignUserToTask = useCallback(async (taskId: string, userId: string) => {
+    try {
+      const updatedTask = await taskService.assignUser(taskId, userId)
+      patchLocal(taskId, updatedTask)
+      toast.success('User assigned to task')
+      return updatedTask
+    } catch {
+      toast.error('Failed to assign user')
+      throw new Error('Failed to assign user')
+    }
+  }, [])
+
+  const unassignUserFromTask = useCallback(async (taskId: string, userId: string) => {
+    try {
+      const updatedTask = await taskService.unassignUser(taskId, userId)
+      patchLocal(taskId, updatedTask)
+      toast.success('User unassigned from task')
+      return updatedTask
+    } catch {
+      toast.error('Failed to unassign user')
+      throw new Error('Failed to unassign user')
+    }
+  }, [])
+
   return {
     tasks: state.tasks,
     total: state.total,
@@ -161,5 +190,8 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     toggleTask,
     updateStatus,   
     updatePriority, 
+    searchAssignableUsers,
+    assignUserToTask,
+    unassignUserFromTask,
   }
 }

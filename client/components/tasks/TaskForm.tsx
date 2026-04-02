@@ -45,7 +45,7 @@ export function TaskForm({ task, onSaved }: Props) {
     watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as any),
     defaultValues: {
       title: task?.title ?? "",
       description: task?.description ?? "",
