@@ -1,7 +1,6 @@
 "use client"
 import { useEffect, useMemo, useState } from "react"
-import { Task, TaskStatus, Priority, UserSummary } from "@/types"
-import { Badge } from "@/components/ui/badge"
+import { TaskStatus, Priority, UserSummary, Props } from "@/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -13,24 +12,8 @@ import {
 } from "@/components/ui/select"
 import { Pencil, Trash2, Calendar, X, Plus } from "lucide-react"
 import { format } from "date-fns"
-
-const priorityConfig: Record<Priority, { className: string; dot: string }> = {
-  LOW: { className: "text-muted-foreground", dot: "bg-muted-foreground" },
-  MEDIUM: { className: "text-yellow-600", dot: "bg-yellow-500" },
-  HIGH: { className: "text-red-600", dot: "bg-red-500" },
-}
-
-interface Props {
-  task: Task
-  onToggle: (id: string) => void
-  onEdit: () => void
-  onDelete: (id: string) => void
-  onStatusChange: (id: string, status: TaskStatus) => void
-  onPriorityChange: (id: string, priority: Priority) => void
-  onSearchAssignableUsers: (taskId: string, search?: string) => Promise<UserSummary[]>
-  onAssignUser: (taskId: string, userId: string) => Promise<unknown>
-  onUnassignUser: (taskId: string, userId: string) => Promise<unknown>
-}
+import { initials } from "@/helpers/helpers"
+import { Badge } from "../ui/badge"
 
 export function TaskCard({
   task,
@@ -44,13 +27,14 @@ export function TaskCard({
   onUnassignUser,
 }: Props) {
   const isCompleted = task.status === "COMPLETED"
-  const priority = priorityConfig[task.priority]
   const [search, setSearch] = useState("")
   const [options, setOptions] = useState<UserSummary[]>([])
   const [selectedUserId, setSelectedUserId] = useState<string>("")
   const [assignLoading, setAssignLoading] = useState(false)
   const [searchLoading, setSearchLoading] = useState(false)
-  const [unassigningUserId, setUnassigningUserId] = useState<string | null>(null)
+  const [unassigningUserId, setUnassigningUserId] = useState<string | null>(
+    null
+  )
   const [showAssigner, setShowAssigner] = useState(false)
 
   const assignedUserIds = useMemo(
@@ -93,15 +77,6 @@ export function TaskCard({
       setUnassigningUserId(null)
     }
   }
-
-  const initialsFromEmail = (email: string) =>
-    email
-      .split("@")[0]
-      .split(/[.\-_]/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part.charAt(0).toUpperCase())
-      .join("")
 
   return (
     <div
@@ -230,7 +205,9 @@ export function TaskCard({
 
         <div className="space-y-2 pt-1">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-medium text-muted-foreground">Assignees</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              Assignees
+            </p>
             <Button
               type="button"
               variant="ghost"
@@ -245,14 +222,22 @@ export function TaskCard({
 
           <div className="flex flex-wrap items-center gap-2">
             {task.assignments.length === 0 ? (
-              <span className="text-xs text-muted-foreground">No assignees</span>
+              <span className="text-xs text-muted-foreground">
+                No assignees
+              </span>
             ) : (
               task.assignments.map((assignment) => (
-                <Badge key={assignment.id} variant="secondary" className="gap-1.5 pr-1">
+                <Badge
+                  key={assignment.id}
+                  variant="secondary"
+                  className="gap-1.5 pr-1"
+                >
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-semibold">
-                    {initialsFromEmail(assignment.user.email)}
+                    {initials(assignment.user.email)}
                   </span>
-                  <span className="max-w-[170px] truncate">{assignment.user.email}</span>
+                  <span className="max-w-[170px] truncate">
+                    {assignment.user.email}
+                  </span>
                   <button
                     type="button"
                     onClick={() => handleUnassign(assignment.userId)}
@@ -276,7 +261,11 @@ export function TaskCard({
               />
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={searchLoading ? "Searching..." : "Select person"} />
+                  <SelectValue
+                    placeholder={
+                      searchLoading ? "Searching..." : "Select person"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {options.map((user) => (
@@ -286,7 +275,10 @@ export function TaskCard({
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={handleAssign} disabled={!selectedUserId || assignLoading}>
+              <Button
+                onClick={handleAssign}
+                disabled={!selectedUserId || assignLoading}
+              >
                 Assign
               </Button>
             </div>

@@ -30,48 +30,8 @@ import {
 import { ArrowLeft, Calendar, Check, Loader2, UserPlus, X } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils"
-
-// ── Helpers ────────────────────────────────────────────────────
-const AVATAR_COLORS = [
-  "bg-violet-100 text-violet-700",
-  "bg-blue-100   text-blue-700",
-  "bg-emerald-100 text-emerald-700",
-  "bg-amber-100  text-amber-700",
-  "bg-rose-100   text-rose-700",
-  "bg-sky-100    text-sky-700",
-]
-
-function avatarColor(email: string) {
-  const code = email.charCodeAt(0) + (email.charCodeAt(email.length - 1) || 0)
-  return AVATAR_COLORS[code % AVATAR_COLORS.length]
-}
-
-function initials(email: string): string {
-  return email
-    .split("@")[0]
-    .split(/[.\-_]/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p.charAt(0).toUpperCase())
-    .join("")
-}
-
-function Avatar({ email, size = "md" }: { email: string; size?: "sm" | "md" }) {
-  const sz = size === "sm" ? "h-5 w-5 text-[9px]" : "h-7 w-7 text-[11px]"
-  return (
-    <span
-      className={cn(
-        "flex shrink-0 items-center justify-center rounded-full font-bold",
-        sz,
-        avatarColor(email)
-      )}
-    >
-      {initials(email)}
-    </span>
-  )
-}
-
+import Avatar from "@/components/common/Avatar"
+import Loading from "@/components/common/Loading"
 // ── Main page ──────────────────────────────────────────────────
 export default function TaskDetailPage() {
   const router = useRouter()
@@ -197,9 +157,7 @@ export default function TaskDetailPage() {
   // ── Render ───────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <Loading />
     )
   }
 

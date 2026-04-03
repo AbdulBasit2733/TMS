@@ -49,3 +49,15 @@ export interface AssignableUsersResponse {
   taskId: string;
   users: UserSummary[];
 }
+
+export interface Props {
+  task: Task
+  onToggle: (id: string) => void
+  onEdit: () => void
+  onDelete: (id: string) => void
+  onStatusChange: (id: string, status: TaskStatus) => void
+  onPriorityChange: (id: string, priority: Priority) => void
+  onSearchAssignableUsers: (taskId: string, search?: string) => Promise<UserSummary[]>
+  onAssignUser: (taskId: string, userId: string) => Promise<unknown>
+  onUnassignUser: (taskId: string, userId: string) => Promise<unknown>
+}

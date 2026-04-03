@@ -1,15 +1,8 @@
 import { Task, UserSummary } from "@/types"
 import { useEffect, useRef, useState } from "react"
 import { Input } from "../ui/input"
-import { Loader2, Plus, Trash2, UserX, X } from "lucide-react"
-const AVATAR_COLORS = [
-  "bg-violet-100 text-violet-700",
-  "bg-blue-100 text-blue-700",
-  "bg-emerald-100 text-emerald-700",
-  "bg-amber-100 text-amber-700",
-  "bg-rose-100 text-rose-700",
-  "bg-sky-100 text-sky-700",
-]
+import { Loader2, Plus, UserX, X } from "lucide-react"
+import { avatarColor, initials } from "@/helpers/helpers"
 
 interface AssignDropdownProps {
   task: Task
@@ -19,19 +12,6 @@ interface AssignDropdownProps {
   ) => Promise<UserSummary[]>
   onAssignUser: (taskId: string, userId: string) => Promise<unknown>
   onUnassignUser: (taskId: string, userId: string) => Promise<unknown>
-}
-function avatarColor(email: string) {
-  const code = email.charCodeAt(0) + (email.charCodeAt(email.length - 1) || 0)
-  return AVATAR_COLORS[code % AVATAR_COLORS.length]
-}
-function initials(email: string) {
-  return email
-    .split("@")[0]
-    .split(/[.\-_]/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p.charAt(0).toUpperCase())
-    .join("")
 }
 export function AssignDropdown({
   task,
