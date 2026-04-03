@@ -33,7 +33,7 @@ export interface SearchAssignableUsersQuery {
 }
 
 export interface TaskWhereClause {
-  userId?: string;
+  userId: string;
   status?: TASK_STATUS;
   title?: {
     contains: string;

@@ -15,7 +15,6 @@ interface AuthCtx {
 
 const Ctx = createContext<AuthCtx | null>(null);
 
-// Decode userId + email from JWT payload (safe for display, not for security)
 function decodeJwt(token: string): AuthUser | null {
   try {
     const p = JSON.parse(atob(token.split('.')[1]));
@@ -28,8 +27,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // On every page load: try silent refresh with httpOnly cookie
-  // This is how the session persists after browser refresh
   useEffect(() => {
     authService.refresh().then((token) => {
       if (token) setUser(decodeJwt(token));
@@ -45,7 +42,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = useCallback(async (email: string, password: string) => {
     await authService.register(email, password);
-    // After register, redirect to login (no auto-login since backend only returns userId)
     router.push('/login?registered=true');
   }, [router]);
 

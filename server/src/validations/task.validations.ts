@@ -10,7 +10,3 @@ export const taskSchema = z.object({
   endDate: z.coerce.date().optional(),
   targetDate: z.coerce.date().optional(),
 });
-
-export const assignTaskSchema = z.object({
-  userId: z.string().uuid('A valid userId is required'),
-});
