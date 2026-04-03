@@ -16,30 +16,22 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { registerUserSchema } from "@/validations/auth.validations"
 
-const schema = z
-  .object({
-    email: z.string().email("Enter a valid email"),
-    password: z.string().min(6, "Minimum 6 characters"),
-    confirm: z.string(),
-  })
-  .refine((d) => d.password === d.confirm, {
-    message: "Passwords don't match",
-    path: ["confirm"],
-  })
-type FormData = z.infer<typeof schema>
+type FormData = z.infer<typeof registerUserSchema>
 
 export default function RegisterPage() {
   const { register: registerUser } = useAuth()
   const [error, setError] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(registerUserSchema),
   })
 
   const onSubmit = async (data: FormData) => {
@@ -73,12 +65,23 @@ export default function RegisterPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
+            <div className="relative">
             <Input
               id="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Min 6 characters"
               {...register("password")}
             />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-2 top-1/2 -translate-y-1/2"
+            >
+              {showPassword ? <EyeOff /> : <Eye />}
+            </Button>
+            </div>
             {errors.password && (
               <p className="text-xs text-destructive">
                 {errors.password.message}
@@ -89,7 +92,7 @@ export default function RegisterPage() {
             <Label htmlFor="confirm">Confirm password</Label>
             <Input
               id="confirm"
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="••••••••"
               {...register("confirm")}
             />

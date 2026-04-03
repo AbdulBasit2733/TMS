@@ -1,5 +1,5 @@
 import { api } from './api';
-import { Task, TaskFilters, CreateTaskInput } from '@/types';
+import { AssignableUsersResponse, Task, TaskFilters, CreateTaskInput } from '@/types';
 
 export const taskService = {
   async getAll(filters: TaskFilters) {
@@ -14,6 +14,11 @@ export const taskService = {
       total: number;
       page: number;
       totalPages: number;
+      stats: {
+        total: number;
+        pending: number;
+        completed: number;
+      };
     };
   },
 
@@ -27,12 +32,37 @@ export const taskService = {
     return data as Task;
   },
 
+  async getById(id: string): Promise<Task> {
+    const { data } = await api.get(`/tasks/${id}`);
+    return data as Task;
+  },
+
   async delete(id: string): Promise<void> {
     await api.delete(`/tasks/${id}`);
   },
 
   async toggle(id: string): Promise<Task> {
     const { data } = await api.patch(`/tasks/${id}/toggle`);
+    return data as Task;
+  },
+
+  async searchAssignableUsers(taskId: string, search?: string, limit = 10): Promise<AssignableUsersResponse> {
+    const params = new URLSearchParams();
+    if (search?.trim()) params.set('search', search.trim());
+    params.set('limit', String(limit));
+
+    const query = params.toString();
+    const { data } = await api.get(`/tasks/${taskId}/assignable-users${query ? `?${query}` : ''}`);
+    return data as AssignableUsersResponse;
+  },
+
+  async assignUser(taskId: string, userId: string): Promise<Task> {
+    const { data } = await api.post(`/tasks/${taskId}/assignments`, { userId });
+    return data as Task;
+  },
+
+  async unassignUser(taskId: string, userId: string): Promise<Task> {
+    const { data } = await api.delete(`/tasks/${taskId}/assignments/${userId}`);
     return data as Task;
   },
 };

@@ -23,8 +23,17 @@ export interface UpdateTaskData {
   targetDate?: Date;
 }
 
-export interface TaskWhereClause {
+export interface AssignTaskInput {
   userId: string;
+}
+
+export interface SearchAssignableUsersQuery {
+  search?: string;
+  limit?: number;
+}
+
+export interface TaskWhereClause {
+  userId?: string;
   status?: TASK_STATUS;
   title?: {
     contains: string;

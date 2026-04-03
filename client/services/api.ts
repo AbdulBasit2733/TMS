@@ -50,7 +50,7 @@ api.interceptors.response.use(
     try {
       // Cookie sent automatically — no body needed
       const { data } = await axios.post(
-        `${BASE}/auth/refresh`, {}, { withCredentials: true }
+        `${BASE_API_URL}/auth/refresh`, {}, { withCredentials: true }
       );
       setAccessToken(data.accessToken);
       flushQueue(null, data.accessToken);

@@ -8,7 +8,8 @@ interface TasksState {
   tasks: Task[]
   total: number
   page: number
-  totalPages: number
+  totalPages: number,
+  stats: { total: number; pending: number; completed: number }
 }
 
 export function useTasks(initialFilters?: Partial<TaskFilters>) {
@@ -17,7 +18,9 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     total: 0,
     page: 1,
     totalPages: 1,
+    stats: { total: 0, pending: 0, completed: 0 },
   })
+
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<TaskFilters>({
     page: 1,
@@ -37,6 +40,7 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
         total: res.total,
         page: res.page,
         totalPages: res.totalPages,
+        stats: res.stats,
       })
     } catch {
       toast.error('Failed to load tasks')
@@ -144,6 +148,35 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     [fetchTasks]
   )
 
+  const searchAssignableUsers = useCallback(async (taskId: string, search?: string) => {
+    const res = await taskService.searchAssignableUsers(taskId, search, 10)
+    return res.users
+  }, [])
+
+  const assignUserToTask = useCallback(async (taskId: string, userId: string) => {
+    try {
+      const updatedTask = await taskService.assignUser(taskId, userId)
+      patchLocal(taskId, updatedTask)
+      toast.success('User assigned to task')
+      return updatedTask
+    } catch {
+      toast.error('Failed to assign user')
+      throw new Error('Failed to assign user')
+    }
+  }, [])
+
+  const unassignUserFromTask = useCallback(async (taskId: string, userId: string) => {
+    try {
+      const updatedTask = await taskService.unassignUser(taskId, userId)
+      patchLocal(taskId, updatedTask)
+      toast.success('User unassigned from task')
+      return updatedTask
+    } catch {
+      toast.error('Failed to unassign user')
+      throw new Error('Failed to unassign user')
+    }
+  }, [])
+
   return {
     tasks: state.tasks,
     total: state.total,
@@ -151,6 +184,7 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     totalPages: state.totalPages,
     loading,
     filters,
+    stats: state.stats,
     setSearch,
     setStatus,
     setPage,
@@ -161,5 +195,8 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     toggleTask,
     updateStatus,   
     updatePriority, 
+    searchAssignableUsers,
+    assignUserToTask,
+    unassignUserFromTask,
   }
 }

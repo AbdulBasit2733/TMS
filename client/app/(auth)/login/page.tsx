@@ -1,5 +1,6 @@
 "use client"
-import { useState } from "react"
+
+import { Suspense, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
@@ -17,17 +18,19 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { loginUserSchema } from "@/validations/auth.validations"
+import Loading from "@/components/common/Loading"
 
-const schema = z.object({
-  email: z.email("Enter a valid email"),
-  password: z.string().min(1, "Password is required"),
-})
-type FormData = z.infer<typeof schema>
+type FormData = z.infer<typeof loginUserSchema>
 
-export default function LoginPage() {
+// 1. The actual form component that reads from the URL
+function LoginForm() {
   const { login } = useAuth()
   const [error, setError] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  
+  // This hook is why we need Suspense wrapping us
   const params = useSearchParams()
   const registered = params.get("registered")
 
@@ -36,7 +39,7 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(loginUserSchema),
   })
 
   const onSubmit = async (data: FormData) => {
@@ -75,12 +78,26 @@ export default function LoginPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
+            <div className="relative">
+
             <Input
               id="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="••••••••"
+              className="pr-10"
               {...register("password")}
-            />
+              />
+              <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-2 top-1/2 -translate-y-1/2"
+            >
+              {showPassword ? <EyeOff /> : <Eye />}
+            </Button>
+              </div>
+           
             {errors.password && (
               <p className="text-xs text-destructive">
                 {errors.password.message}
@@ -106,5 +123,14 @@ export default function LoginPage() {
         </p>
       </CardFooter>
     </Card>
+  )
+}
+
+// 2. The default export that wraps the form in Suspense
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <LoginForm />
+    </Suspense>
   )
 }

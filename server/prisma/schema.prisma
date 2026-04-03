@@ -14,27 +14,42 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tasks     Task[]
+  id              String           @id @default(uuid())
+  email           String           @unique
+  password        String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  tasks           Task[]
+  taskAssignments TaskAssignment[]
 }
 
 model Task {
-  id          String      @id @default(uuid())
+  id          String           @id @default(uuid())
   title       String
   description String?
-  status      TASK_STATUS @default(PENDING)
-  priority    PRIORITY    @default(MEDIUM)
+  status      TASK_STATUS      @default(PENDING)
+  priority    PRIORITY         @default(MEDIUM)
   startDate   DateTime
   endDate     DateTime
   targetDate  DateTime
   userId      String
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments TaskAssignment[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model TaskAssignment {
+  id        String   @id @default(uuid())
+  taskId    String
+  userId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([taskId, userId])
+  @@index([userId])
+  @@index([taskId])
 }
 
 enum TASK_STATUS {

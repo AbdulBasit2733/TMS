@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/context/AuthContext"
 import { Loader2 } from "lucide-react"
 import { Navbar } from "@/components/layout/Navbar"
+import Loading from "@/components/common/Loading"
 
 export default function DashboardLayout({
   children,
@@ -14,15 +15,12 @@ export default function DashboardLayout({
   const router = useRouter()
 
   useEffect(() => {
-    // After silent refresh attempt completes, redirect if not authenticated
     if (!isLoading && !isAuthenticated) router.replace("/login")
   }, [isAuthenticated, isLoading, router])
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <Loading />
     )
   }
   if (!isAuthenticated) return null
@@ -30,7 +28,7 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      <main className="container mx-auto max-w-5xl flex-1 px-4 py-8">
+      <main className="container mx-auto max-w-7xl flex-1 px-4 py-8">
         {children}
       </main>
     </div>
