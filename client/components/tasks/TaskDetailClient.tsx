@@ -63,6 +63,14 @@ export function TaskDetailClient({ taskId }: Props) {
   if (loading) return null;
   if (!task) return null;
 
+  const dates = [
+    { label: "Start", date: task.startDate },
+    { label: "Target", date: task.targetDate },
+    { label: "End", date: task.endDate },
+  ];
+
+  const hasAnyDate = dates.some(({ date }) => !!date);
+
   return (
     <div className="space-y-6">
       {/* Back */}
@@ -76,95 +84,113 @@ export function TaskDetailClient({ taskId }: Props) {
       </Button>
 
       {/* Main card */}
-      <div className="rounded-2xl border bg-card p-6 shadow-sm">
-        {/* Title + controls */}
-        <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {task.title}
-            </h1>
-            {task.description && (
-              <p className="max-w-2xl text-sm text-muted-foreground">
-                {task.description}
-              </p>
-            )}
-          </div>
+      <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-5">
 
-          <div className="flex flex-wrap gap-2">
-            {/* Status */}
-            <Select
-              value={task.status}
-              onValueChange={(v) => updateStatus(v as TaskStatus)}
-            >
-              <SelectTrigger className="w-[150px] bg-card">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="PENDING">
-                  <span className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-amber-500" />
-                    Pending
-                  </span>
-                </SelectItem>
-                <SelectItem value="COMPLETED">
-                  <span className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                    Completed
-                  </span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Priority */}
-            <Select
-              value={task.priority}
-              onValueChange={(v) => updatePriority(v as Priority)}
-            >
-              <SelectTrigger className="w-[140px] bg-card">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="LOW">
-                  <span className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-slate-400" />
-                    <span className="text-muted-foreground">Low</span>
-                  </span>
-                </SelectItem>
-                <SelectItem value="MEDIUM">
-                  <span className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-amber-500" />
-                    <span className="text-amber-600">Medium</span>
-                  </span>
-                </SelectItem>
-                <SelectItem value="HIGH">
-                  <span className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-red-500" />
-                    <span className="text-red-600">High</span>
-                  </span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        {/* ── Row 1: Title + description ───────────────────── */}
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {task.title}
+          </h1>
+          {task.description ? (
+            <p className="max-w-2xl text-sm text-muted-foreground">
+              {task.description}
+            </p>
+          ) : (
+            <p className="text-sm italic text-muted-foreground/60">
+              No description provided.
+            </p>
+          )}
         </div>
 
-        {/* Date pills */}
-        <div className="flex flex-wrap gap-2.5">
-          {[
-            { label: "Start", date: task.startDate },
-            { label: "Target", date: task.targetDate },
-            { label: "End", date: task.endDate },
-          ]
-            .filter(({ date }) => !!date)
-            .map(({ label, date }) => (
-              <span
-                key={label}
-                className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-xs text-accent-foreground"
-              >
-                <Calendar className="h-3.5 w-3.5 text-primary" />
-                {label}: {format(new Date(date), "MMM d, yyyy")}
-              </span>
-            ))}
+        {/* ── Divider ──────────────────────────────────────── */}
+        <div className="border-t" />
+
+        {/* ── Row 2: Status + Priority selects ─────────────── */}
+        <div className="flex flex-wrap gap-2">
+          {/* Status */}
+          <Select
+            value={task.status}
+            onValueChange={(v) => updateStatus(v as TaskStatus)}
+          >
+            <SelectTrigger className="w-[150px] bg-card">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PENDING">
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                  Pending
+                </span>
+              </SelectItem>
+              <SelectItem value="COMPLETED">
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  Completed
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Priority */}
+          <Select
+            value={task.priority}
+            onValueChange={(v) => updatePriority(v as Priority)}
+          >
+            <SelectTrigger className="w-[140px] bg-card">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="LOW">
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-slate-400" />
+                  <span className="text-muted-foreground">Low</span>
+                </span>
+              </SelectItem>
+              <SelectItem value="MEDIUM">
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                  <span className="text-amber-600">Medium</span>
+                </span>
+              </SelectItem>
+              <SelectItem value="HIGH">
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-red-500" />
+                  <span className="text-red-600">High</span>
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
+        {/* ── Divider ──────────────────────────────────────── */}
+        <div className="border-t" />
+
+        {/* ── Row 3: Dates ─────────────────────────────────── */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Dates
+          </p>
+          {hasAnyDate ? (
+            <div className="flex flex-wrap gap-2.5">
+              {dates
+                .filter(({ date }) => !!date)
+                .map(({ label, date }) => (
+                  <span
+                    key={label}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-xs text-accent-foreground"
+                  >
+                    <Calendar className="h-3.5 w-3.5 text-primary" />
+                    {label}: {format(new Date(date), "MMM d, yyyy")}
+                  </span>
+                ))}
+            </div>
+          ) : (
+            <p className="text-sm italic text-muted-foreground/60">
+              No dates provided.
+            </p>
+          )}
+        </div>
+
       </div>
     </div>
   );

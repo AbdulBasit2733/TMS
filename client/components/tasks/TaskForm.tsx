@@ -16,7 +16,7 @@ import {
 import { Loader2 } from "lucide-react"
 import { taskFormSchema } from "@/validations/task.validations"
 import { taskService } from "@/services/taskService"
-
+import { toDateInput } from "@/helpers/helpers"
 type FormData = z.output<typeof taskFormSchema>
 
 interface Props {
@@ -34,25 +34,25 @@ export function TaskForm({ task, onSaved }: Props) {
   } = useForm<FormData>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
-      title: task?.title ?? "",
+      title:       task?.title       ?? "",
       description: task?.description ?? "",
-      status: task?.status ?? "PENDING",
-      priority: task?.priority ?? "MEDIUM",
-      startDate: task?.startDate ?? "",
-      endDate: task?.endDate ?? "",
-      targetDate: task?.targetDate ?? "",
+      status:      task?.status      ?? "PENDING",
+      priority:    task?.priority    ?? "MEDIUM",
+      startDate:   toDateInput(task?.startDate),
+      endDate:     toDateInput(task?.endDate),
+      targetDate:  toDateInput(task?.targetDate),
     },
   })
 
   const onSubmit = async (data: FormData) => {
     const payload = {
-      title: data.title,
+      title:       data.title,
       description: data.description || undefined,
-      status: data.status,
-      priority: data.priority,
-      startDate: data.startDate || undefined,
-      endDate: data.endDate || undefined,
-      targetDate: data.targetDate || undefined,
+      status:      data.status,
+      priority:    data.priority,
+      startDate:   data.startDate  || undefined,
+      endDate:     data.endDate    || undefined,
+      targetDate:  data.targetDate || undefined,
     }
 
     if (task) await taskService.update(task.id, payload)
@@ -91,9 +91,7 @@ export function TaskForm({ task, onSaved }: Props) {
           <Label>Status</Label>
           <Select
             defaultValue={watch("status")}
-            onValueChange={(v) =>
-              setValue("status", v as "PENDING" | "COMPLETED")
-            }
+            onValueChange={(v) => setValue("status", v as "PENDING" | "COMPLETED")}
           >
             <SelectTrigger>
               <SelectValue />
@@ -108,9 +106,7 @@ export function TaskForm({ task, onSaved }: Props) {
           <Label>Priority</Label>
           <Select
             defaultValue={watch("priority")}
-            onValueChange={(v) =>
-              setValue("priority", v as "LOW" | "MEDIUM" | "HIGH")
-            }
+            onValueChange={(v) => setValue("priority", v as "LOW" | "MEDIUM" | "HIGH")}
           >
             <SelectTrigger>
               <SelectValue />
@@ -141,7 +137,7 @@ export function TaskForm({ task, onSaved }: Props) {
       </div>
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {task ? "Update Task" : "Create Task"}
       </Button>
     </form>

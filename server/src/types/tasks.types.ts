@@ -35,6 +35,7 @@ export interface SearchAssignableUsersQuery {
 export interface TaskWhereClause {
   userId: string;
   status?: TASK_STATUS;
+  priority?: PRIORITY;
   title?: {
     contains: string;
     mode: 'insensitive';

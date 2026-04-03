@@ -55,7 +55,7 @@ export const login = async (req: Request, res: Response) => {
       { expiresIn: "15m" }
     );
     const refreshToken = jwt.sign(
-      { userId: user.id },
+      { userId: user.id, email: user.email },
       process.env.JWT_REFRESH_SECRET as string,
       { expiresIn: "7d" }
     );
@@ -108,7 +108,7 @@ export const refresh = async (req: Request, res: Response) => {
           maxAge: 15 * 60 * 1000,
         });
 
-        res.status(200).json({ message: "Token refreshed" });
+        res.status(200).json({ userId: decoded.userId, email: decoded.email, message:"token refreshed" });
       }
     );
   } catch {

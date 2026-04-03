@@ -9,7 +9,7 @@ interface TasksState {
   total: number
   page: number
   totalPages: number,
-  stats: { total: number; pending: number; completed: number }
+  stats: { total: number; pending: number; completed: number; high: number; medium: number; low: number }
 }
 
 export function useTasks(initialFilters?: Partial<TaskFilters>) {
@@ -18,7 +18,7 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     total: 0,
     page: 1,
     totalPages: 1,
-    stats: { total: 0, pending: 0, completed: 0 },
+    stats: { total: 0, pending: 0, completed: 0, high: 0, medium: 0, low: 0 },
   })
 
   const [loading, setLoading] = useState(true)
@@ -26,6 +26,7 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     page: 1,
     search: '',
     status: '',
+    priority: '',
     ...initialFilters,
   })
 
@@ -62,6 +63,10 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
 
   const setStatus = useCallback((value: TaskFilters['status']) => {
     setFilters((f) => ({ ...f, status: value, page: 1 }))
+  }, [])
+
+  const setPriority = useCallback((value: TaskFilters['priority']) => {
+    setFilters((f) => ({ ...f, priority: value, page: 1 }))
   }, [])
 
   const setPage = useCallback((page: number) => {
@@ -152,6 +157,7 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     stats: state.stats,
     setSearch,
     setStatus,
+    setPriority,
     setPage,
     fetchTasks,
     createTask,

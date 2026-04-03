@@ -28,6 +28,8 @@ import {
   ClipboardList,
   CheckCircle2,
   Clock,
+  AlertTriangle,
+  AlertCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -42,6 +44,7 @@ export default function DashboardPage() {
     stats,
     setSearch,
     setStatus,
+    setPriority,
     setPage,
     fetchTasks,
     deleteTask,
@@ -52,7 +55,6 @@ export default function DashboardPage() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
-  const [priorityFilter, setPriorityFilter] = useState<Priority | "">("");
 
   const handleSaved = () => {
     setCreateOpen(false);
@@ -60,9 +62,7 @@ export default function DashboardPage() {
     fetchTasks();
   };
 
-  const visibleTasks = priorityFilter
-    ? tasks.filter((t) => t.priority === priorityFilter)
-    : tasks;
+  const visibleTasks = tasks;
 
   const statsData = [
     {
@@ -84,6 +84,30 @@ export default function DashboardPage() {
     {
       label: "Completed",
       value: stats.completed,
+      icon: CheckCircle2,
+      valueCls: "text-emerald-600 dark:text-emerald-400",
+      bgCls: "bg-emerald-500/10",
+      iconCls: "text-emerald-500",
+    },
+    {
+      label: "High",
+      value: stats.high,
+      icon: AlertTriangle,
+      valueCls: "text-red-600 dark:text-red-400",
+      bgCls: "bg-red-500/10",
+      iconCls: "text-red-500",
+    },
+    {
+      label: "Medium",
+      value: stats.medium,
+      icon: AlertCircle,
+      valueCls: "text-amber-600 dark:text-amber-400",
+      bgCls: "bg-amber-500/10",
+      iconCls: "text-amber-500",
+    },
+    {
+      label: "Low",
+      value: stats.low,
       icon: CheckCircle2,
       valueCls: "text-emerald-600 dark:text-emerald-400",
       bgCls: "bg-emerald-500/10",
@@ -169,8 +193,8 @@ export default function DashboardPage() {
             </SelectContent>
           </Select>
           <Select
-            value={priorityFilter || "ALL"}
-            onValueChange={(v) => setPriorityFilter(v === "ALL" ? "" : (v as Priority))}
+            value={filters.priority || ""}
+            onValueChange={(v) => setPriority(v === "" ? "" : (v as Priority))}
           >
             <SelectTrigger className="h-9 w-full bg-card text-sm sm:w-40">
               <SelectValue placeholder="All priorities" />

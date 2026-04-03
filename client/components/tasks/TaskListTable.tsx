@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select"
 import { Calendar, ChevronRight, Pencil, Trash2 } from "lucide-react"
 import { format } from "date-fns"
+import { toDateInput } from "@/helpers/helpers"
 
 interface Props {
   tasks: Task[]
@@ -177,12 +178,12 @@ export function TaskListTable({
 
                   {/* ── Target date ── */}
                   <td className="px-4 py-3 text-muted-foreground">
-                    {task.targetDate && (
+                    {task.targetDate ? (
                       <span className="inline-flex items-center gap-1 text-xs">
                         <Calendar className="h-3.5 w-3.5" />
-                        {format(new Date(task.targetDate), "MMM d, yyyy")}
+                        {toDateInput(task.targetDate)}
                       </span>
-                    )}
+                    ): <span className="text-muted-foreground">No date</span>}
                   </td>
 
                   {/* ── Actions ── */}

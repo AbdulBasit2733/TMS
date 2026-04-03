@@ -33,6 +33,7 @@ export interface TaskFilters {
   page: number;
   search: string;
   status: TaskStatus | '';
+  priority: Priority | '';
 }
 
 export interface CreateTaskInput {

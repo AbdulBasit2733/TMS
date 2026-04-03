@@ -1,10 +1,11 @@
 import { TaskDetailClient } from "@/components/tasks/TaskDetailClient";
 
 
-export default function TaskDetailPage({
+export default async function TaskDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  return <TaskDetailClient taskId={params.id} />;
+  const { id } = await params;
+  return <TaskDetailClient taskId={id} />;
 }

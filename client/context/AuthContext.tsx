@@ -28,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     authService.refresh().then((authUser) => {
+      console.log("auth User", authUser)
       setUser(authUser);
       setIsLoading(false);
     });

@@ -18,6 +18,7 @@ export const authService = {
   async refresh(): Promise<AuthUser | null> {
     try {
       const { data } = await api.post("/auth/refresh");
+      console.log("data", data)
       return { id: data.userId, email: data.email };
     } catch {
       return null;

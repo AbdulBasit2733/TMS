@@ -7,6 +7,7 @@ export const taskService = {
     params.set('page', String(filters.page ?? 1));
     if (filters.search) params.set('search', filters.search);
     if (filters.status) params.set('status', filters.status);
+    if (filters.priority) params.set('priority', filters.priority);
 
     const { data } = await api.get(`/tasks?${params}`);
     return data as {
@@ -18,6 +19,9 @@ export const taskService = {
         total: number;
         pending: number;
         completed: number;
+        high: number;
+        medium: number;
+        low: number;
       };
     };
   },

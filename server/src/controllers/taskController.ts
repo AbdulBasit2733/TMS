@@ -19,6 +19,7 @@ export const getTasks = async (
     const pageRaw = firstQueryString(req.query.page);
     const limitRaw = firstQueryString(req.query.limit);
     const statusRaw = firstQueryString(req.query.status);
+    const priorityRaw = firstQueryString(req.query.priority);
     const search = firstQueryString(req.query.search);
 
     const pageNumber = Math.max(1, parseInt(pageRaw ?? "1", 10));
@@ -33,13 +34,16 @@ export const getTasks = async (
     ) {
       filteredWhere.status = statusRaw as TASK_STATUS;
     }
+    if (priorityRaw && Object.values(PRIORITY).includes(priorityRaw as PRIORITY)) {
+      filteredWhere.priority = priorityRaw as PRIORITY;
+    }
     if (search) {
       filteredWhere.title = { contains: search, mode: "insensitive" };
     }
 
     const globalWhere: TaskWhereClause = { userId: userId };
 
-    const [tasks, total, globalTotal, globalPending, globalCompleted] =
+    const [tasks, total, globalTotal, globalPending, globalCompleted, globalHigh, globalMedium, globalLow] =
       await prisma.$transaction([
         prisma.task.findMany({
           where: filteredWhere,
@@ -58,6 +62,15 @@ export const getTasks = async (
         prisma.task.count({
           where: { ...globalWhere, status: TASK_STATUS.COMPLETED },
         }),
+        prisma.task.count({
+          where: { ...globalWhere, priority: PRIORITY.HIGH },
+        }),
+        prisma.task.count({
+          where: { ...globalWhere, priority: PRIORITY.MEDIUM },
+        }),
+        prisma.task.count({
+          where: { ...globalWhere, priority: PRIORITY.LOW },
+        }),
       ]);
 
     res.status(200).json({
@@ -69,6 +82,9 @@ export const getTasks = async (
         total: globalTotal,
         pending: globalPending,
         completed: globalCompleted,
+        high: globalHigh,
+        medium: globalMedium,
+        low: globalLow,
       },
     });
   } catch {
