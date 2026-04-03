@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { prisma } from "../utils/prisma";
 import { AuthRequest } from "../middlewares/authMiddleware";
-import { TASK_STATUS } from "@prisma/client";
+import { PRIORITY, TASK_STATUS } from "@prisma/client";
 import {
   CreateTaskData,
   UpdateTaskData,
@@ -93,9 +93,9 @@ export const createTask = async (
     const data: CreateTaskData = {
       title: parsed.data.title,
       userId,
-      startDate: parsed.data.startDate ?? new Date(),
-      endDate: parsed.data.endDate ?? new Date(),
-      targetDate: parsed.data.targetDate ?? new Date(),
+      startDate: parsed.data.startDate ?? null,
+      endDate: parsed.data.endDate ?? null,
+      targetDate: parsed.data.targetDate ?? null,
       description: parsed.data.description ?? null,
       ...(parsed.data.status !== undefined && { status: parsed.data.status }),
       ...(parsed.data.priority !== undefined && {
@@ -249,6 +249,42 @@ export const toggleTaskStatus = async (
     const task = await prisma.task.update({
       where: { id, userId: userId },
       data: { status: newStatus },
+    });
+    res.status(200).json(task);
+  } catch {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+export const toggleTaskPriority = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const userId = req.userId!;
+    const id = getParam(req, "id");
+    if (!id) {
+      res.status(400).json({ error: "Task id is required" });
+      return;
+    }
+
+    const existing = await prisma.task.findUnique({
+      where: { id, userId: userId },
+    });
+    if (!existing) {
+      res.status(404).json({ error: "Task not found" });
+      return;
+    }
+
+    const newPriority: PRIORITY =
+      existing.priority === PRIORITY.LOW
+        ? PRIORITY.MEDIUM
+        : existing.priority === PRIORITY.MEDIUM
+        ? PRIORITY.HIGH
+        : PRIORITY.LOW;
+
+    const task = await prisma.task.update({
+      where: { id, userId: userId },
+      data: { priority: newPriority },
     });
     res.status(200).json(task);
   } catch {

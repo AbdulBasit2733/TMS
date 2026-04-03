@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Sign in — TaskApp",
+  description: "Sign in or create your account",
+};
+
 export default function AuthLayout({
   children,
 }: {

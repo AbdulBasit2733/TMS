@@ -9,19 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Calendar,
-  ChevronRight,
-  Loader2,
-  Pencil,
-  Plus,
-  Trash2,
-  UserX,
-  X,
-} from "lucide-react"
+import { Calendar, ChevronRight, Pencil, Trash2 } from "lucide-react"
 import { format } from "date-fns"
-import type { UserSummary } from "@/types"
-import { AssignDropdown } from "../common/AssignDropdown"
 
 interface Props {
   tasks: Task[]
@@ -31,12 +20,6 @@ interface Props {
   onDelete: (id: string) => void
   onStatusChange: (id: string, status: TaskStatus) => void
   onPriorityChange: (id: string, priority: Priority) => void
-  onSearchAssignableUsers: (
-    taskId: string,
-    search?: string
-  ) => Promise<UserSummary[]>
-  onAssignUser: (taskId: string, userId: string) => Promise<unknown>
-  onUnassignUser: (taskId: string, userId: string) => Promise<unknown>
 }
 
 const priorityTone: Record<Priority, string> = {
@@ -53,18 +36,14 @@ export function TaskListTable({
   onDelete,
   onStatusChange,
   onPriorityChange,
-  onSearchAssignableUsers,
-  onAssignUser,
-  onUnassignUser,
 }: Props) {
   return (
-    <div className="overflow-hidden rounded-xl border bg-card">
+    <div className="overflow-hidden rounded-xl border-l-0 border-r-0 border-t-0 bg-card">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[980px] text-sm">
+        <table className="w-full min-w-[700px] text-sm">
           <thead className="bg-muted/40 text-xs tracking-wide text-muted-foreground uppercase">
             <tr>
               <th className="px-4 py-3 text-left font-medium">Task</th>
-              <th className="px-4 py-3 text-left font-medium">Assignees</th>
               <th className="px-4 py-3 text-left font-medium">Status</th>
               <th className="px-4 py-3 text-left font-medium">Priority</th>
               <th className="px-4 py-3 text-left font-medium">Target</th>
@@ -109,7 +88,11 @@ export function TaskListTable({
                       </button>
                       <div className="min-w-0">
                         <p
-                          className={`truncate font-medium ${isCompleted ? "text-muted-foreground line-through" : ""}`}
+                          className={`truncate font-medium ${
+                            isCompleted
+                              ? "text-muted-foreground line-through"
+                              : ""
+                          }`}
                         >
                           {task.title}
                         </p>
@@ -120,19 +103,6 @@ export function TaskListTable({
                         )}
                       </div>
                     </div>
-                  </td>
-
-                  {/* ── Assignees ── */}
-                  <td
-                    className="px-4 py-3"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <AssignDropdown
-                      task={task}
-                      onSearchAssignableUsers={onSearchAssignableUsers}
-                      onAssignUser={onAssignUser}
-                      onUnassignUser={onUnassignUser}
-                    />
                   </td>
 
                   {/* ── Status ── */}
@@ -207,10 +177,12 @@ export function TaskListTable({
 
                   {/* ── Target date ── */}
                   <td className="px-4 py-3 text-muted-foreground">
-                    <span className="inline-flex items-center gap-1 text-xs">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {format(new Date(task.targetDate), "MMM d, yyyy")}
-                    </span>
+                    {task.targetDate && (
+                      <span className="inline-flex items-center gap-1 text-xs">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {format(new Date(task.targetDate), "MMM d, yyyy")}
+                      </span>
+                    )}
                   </td>
 
                   {/* ── Actions ── */}

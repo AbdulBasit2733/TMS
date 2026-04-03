@@ -1,9 +1,15 @@
 'use client';
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { authService } from '@/services/authService';
 
-interface AuthUser { id: string; email: string; }
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react';
+import { useRouter } from 'next/navigation';
+import { authService, AuthUser } from '@/services/authService';
+
 interface AuthCtx {
   user: AuthUser | null;
   isLoading: boolean;
@@ -15,35 +21,34 @@ interface AuthCtx {
 
 const Ctx = createContext<AuthCtx | null>(null);
 
-function decodeJwt(token: string): AuthUser | null {
-  try {
-    const p = JSON.parse(atob(token.split('.')[1]));
-    return { id: p.userId, email: p.email ?? '' };
-  } catch { return null; }
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    authService.refresh().then((token) => {
-      if (token) setUser(decodeJwt(token));
+    authService.refresh().then((authUser) => {
+      setUser(authUser);
       setIsLoading(false);
     });
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const token = await authService.login(email, password);
-    setUser(decodeJwt(token));
-    router.push('/dashboard');
-  }, [router]);
+  const login = useCallback(
+    async (email: string, password: string) => {
+      const authUser = await authService.login(email, password);
+      setUser(authUser);
+      router.push('/dashboard');
+    },
+    [router]
+  );
 
-  const register = useCallback(async (email: string, password: string) => {
-    await authService.register(email, password);
-    router.push('/login?registered=true');
-  }, [router]);
+  const register = useCallback(
+    async (email: string, password: string) => {
+      await authService.register(email, password);
+      router.push('/login?registered=true');
+    },
+    [router]
+  );
 
   const logout = useCallback(async () => {
     await authService.logout();
@@ -52,7 +57,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   return (
-    <Ctx.Provider value={{ user, isLoading, isAuthenticated: !!user, login, register, logout }}>
+    <Ctx.Provider
+      value={{
+        user,
+        isLoading,
+        isAuthenticated: !!user,
+        login,
+        register,
+        logout,
+      }}
+    >
       {children}
     </Ctx.Provider>
   );

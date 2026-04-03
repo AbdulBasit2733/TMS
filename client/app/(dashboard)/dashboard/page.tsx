@@ -1,26 +1,26 @@
-"use client"
-import { useState } from "react"
-import { useTasks } from "@/hooks/useTasks"
-import { Task, TaskStatus } from "@/types"
-import { TaskForm } from "@/components/tasks/TaskForm"
-import { TaskListTable } from "@/components/tasks/TaskListTable"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+"use client";
+
+import { useState } from "react";
+import { useTasks } from "@/hooks/useTasks";
+import { Task, TaskStatus, Priority } from "@/types";
+import { TaskForm } from "@/components/tasks/TaskForm";
+import { TaskListTable } from "@/components/tasks/TaskListTable";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { useAuth } from "@/context/AuthContext"
+} from "@/components/ui/dialog";
 import {
   Plus,
   Search,
@@ -28,12 +28,11 @@ import {
   ClipboardList,
   CheckCircle2,
   Clock,
-} from "lucide-react"
-import { useRouter } from "next/navigation"
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
-  const router = useRouter()
-  const { user } = useAuth()
+  const router = useRouter();
   const {
     tasks,
     page,
@@ -49,25 +48,21 @@ export default function DashboardPage() {
     toggleTask,
     updateStatus,
     updatePriority,
-    searchAssignableUsers,
-    assignUserToTask,
-    unassignUserFromTask,
-  } = useTasks()
+  } = useTasks();
 
-  const [createOpen, setCreateOpen] = useState(false)
-  const [editTask, setEditTask] = useState<Task | null>(null)
-  const [viewTab, setViewTab] = useState<"all" | "assigned">("all")
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editTask, setEditTask] = useState<Task | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<Priority | "">("");
 
   const handleSaved = () => {
-    setCreateOpen(false)
-    setEditTask(null)
-    fetchTasks()
-  }
+    setCreateOpen(false);
+    setEditTask(null);
+    fetchTasks();
+  };
 
-  const visibleTasks =
-    viewTab === "all"
-      ? tasks
-      : tasks.filter((t) => t.assignments.some((a) => a.userId === user?.id))
+  const visibleTasks = priorityFilter
+    ? tasks.filter((t) => t.priority === priorityFilter)
+    : tasks;
 
   const statsData = [
     {
@@ -94,7 +89,7 @@ export default function DashboardPage() {
       bgCls: "bg-emerald-500/10",
       iconCls: "text-emerald-500",
     },
-  ]
+  ];
 
   return (
     <div className="space-y-5 px-1">
@@ -102,10 +97,9 @@ export default function DashboardPage() {
         <div className="space-y-0.5">
           <h1 className="text-xl font-semibold tracking-tight">Tasks</h1>
           <p className="text-sm text-muted-foreground">
-            Organize work, manage assignees, and track progress.
+            Organize work and track progress.
           </p>
         </div>
-
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="h-9 gap-1.5 px-4">
@@ -128,18 +122,12 @@ export default function DashboardPage() {
             key={s.label}
             className="flex items-center gap-4 rounded-xl border bg-card px-4 py-3.5 shadow-sm transition-all duration-200 hover:border-primary/20 hover:shadow-md"
           >
-            <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${s.bgCls}`}
-            >
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${s.bgCls}`}>
               <s.icon className={`h-5 w-5 ${s.iconCls}`} />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-medium text-muted-foreground">
-                {s.label}
-              </p>
-              <p
-                className={`text-2xl leading-tight font-bold tabular-nums ${s.valueCls}`}
-              >
+              <p className="text-xs font-medium text-muted-foreground">{s.label}</p>
+              <p className={`text-2xl leading-tight font-bold tabular-nums ${s.valueCls}`}>
                 {s.value}
               </p>
             </div>
@@ -148,23 +136,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-        <div className="flex items-center gap-0.5 border-b bg-card px-3">
-          {(["all", "assigned"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setViewTab(tab)}
-              className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${
-                viewTab === tab
-                  ? "text-primary after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-t-full after:bg-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              } `}
-            >
-              {tab === "all" ? "All Tasks" : "My Assigned"}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex flex-col gap-2.5 bg-background/60 p-3 sm:flex-row">
+        <div className="flex flex-col gap-2.5 border-b bg-background/60 p-3 sm:flex-row">
           <div className="relative flex-1">
             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -173,15 +145,12 @@ export default function DashboardPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-
           <Select
             value={filters.status || "ALL"}
-            onValueChange={(v) =>
-              setStatus(v === "ALL" ? "" : (v as TaskStatus))
-            }
+            onValueChange={(v) => setStatus(v === "ALL" ? "" : (v as TaskStatus))}
           >
-            <SelectTrigger className="h-9 w-full bg-card text-sm sm:w-44">
-              <SelectValue placeholder="Filter status" />
+            <SelectTrigger className="h-9 w-full bg-card text-sm sm:w-40">
+              <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All statuses</SelectItem>
@@ -199,85 +168,86 @@ export default function DashboardPage() {
               </SelectItem>
             </SelectContent>
           </Select>
+          <Select
+            value={priorityFilter || "ALL"}
+            onValueChange={(v) => setPriorityFilter(v === "ALL" ? "" : (v as Priority))}
+          >
+            <SelectTrigger className="h-9 w-full bg-card text-sm sm:w-40">
+              <SelectValue placeholder="All priorities" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All priorities</SelectItem>
+              <SelectItem value="LOW">
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-slate-400" />
+                  <span className="text-muted-foreground">Low</span>
+                </span>
+              </SelectItem>
+              <SelectItem value="MEDIUM">
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                  <span className="text-amber-600">Medium</span>
+                </span>
+              </SelectItem>
+              <SelectItem value="HIGH">
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-red-500" />
+                  <span className="text-red-600">High</span>
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-      </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-24">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-7 w-7 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading tasks…</p>
+        {loading ? (
+          <div className="flex items-center justify-center py-24">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-7 w-7 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Loading tasks…</p>
+            </div>
           </div>
-        </div>
-      ) : visibleTasks.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-xl border bg-card py-20 text-center shadow-sm">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent">
-            <ClipboardList className="h-6 w-6 text-primary" />
-          </div>
-          <p className="mt-2 font-semibold">
-            {viewTab === "all" ? "No tasks yet" : "No tasks assigned to you"}
-          </p>
-          <p className="max-w-[26ch] text-sm text-muted-foreground">
-            {viewTab === "all"
-              ? "Create your first task to start tracking work."
-              : "Switch to All Tasks or ask a teammate to assign you one."}
-          </p>
-          {viewTab === "all" && (
-            <Button
-              size="sm"
-              className="mt-4 gap-1.5"
-              onClick={() => setCreateOpen(true)}
-            >
+        ) : visibleTasks.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-20 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent">
+              <ClipboardList className="h-6 w-6 text-primary" />
+            </div>
+            <p className="mt-2 font-semibold">No tasks found</p>
+            <p className="max-w-[26ch] text-sm text-muted-foreground">
+              Create your first task to start tracking work.
+            </p>
+            <Button size="sm" className="mt-4 gap-1.5" onClick={() => setCreateOpen(true)}>
               <Plus className="h-3.5 w-3.5" />
               New Task
             </Button>
-          )}
-        </div>
-      ) : (
-        <TaskListTable
-          tasks={visibleTasks}
-          onOpenTask={(id) => router.push(`/dashboard/tasks/${id}`)}
-          onToggle={toggleTask}
-          onEdit={(task) => setEditTask(task)}
-          onDelete={deleteTask}
-          onStatusChange={updateStatus}
-          onPriorityChange={updatePriority}
-          onSearchAssignableUsers={searchAssignableUsers}
-          onAssignUser={assignUserToTask}
-          onUnassignUser={unassignUserFromTask}
-        />
-      )}
+          </div>
+        ) : (
+          <TaskListTable
+            tasks={visibleTasks}
+            onOpenTask={(id) => router.push(`/dashboard/tasks/${id}`)}
+            onToggle={toggleTask}
+            onEdit={(task) => setEditTask(task)}
+            onDelete={deleteTask}
+            onStatusChange={updateStatus}
+            onPriorityChange={updatePriority}
+          />
+        )}
+      </div>
 
-      {/* ── Pagination ───────────────────────────────────────── */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 px-3 hover:bg-accent hover:text-accent-foreground"
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-          >
+          <Button variant="outline" size="sm" className="h-8 px-3" disabled={page === 1} onClick={() => setPage(page - 1)}>
             Previous
           </Button>
           <span className="text-xs text-muted-foreground">
             Page <span className="font-semibold text-foreground">{page}</span>{" "}
-            of{" "}
-            <span className="font-semibold text-foreground">{totalPages}</span>
+            of <span className="font-semibold text-foreground">{totalPages}</span>
           </span>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 px-3 hover:bg-accent hover:text-accent-foreground"
-            disabled={page === totalPages}
-            onClick={() => setPage(page + 1)}
-          >
+          <Button variant="outline" size="sm" className="h-8 px-3" disabled={page === totalPages} onClick={() => setPage(page + 1)}>
             Next
           </Button>
         </div>
       )}
 
-      {/* ── Edit Dialog ──────────────────────────────────────── */}
       <Dialog open={!!editTask} onOpenChange={(o) => !o && setEditTask(null)}>
         <DialogContent className="bg-card">
           <DialogHeader>
@@ -287,5 +257,5 @@ export default function DashboardPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

@@ -1,38 +1,34 @@
-import axios from 'axios';
-import { api, setAccessToken, clearAccessToken } from './api';
-import { BASE_API_URL } from '@/lib/utils';
+import { api } from "./api";
 
+export interface AuthUser {
+  id: string;
+  email: string;
+}
 
 export const authService = {
-  async register(email: string, password: string) {
-    const { data } = await axios.post(`${BASE_API_URL}/auth/register`, { email, password });
-    return data; // { message, userId }
+  async register(email: string, password: string): Promise<void> {
+    await api.post("/auth/register", { email, password });
   },
 
-  async login(email: string, password: string) {
-    // Backend sets httpOnly cookie "refreshToken" via Set-Cookie header
-    // Backend returns only { accessToken } in body
-    const { data } = await axios.post(
-      `${BASE_API_URL}/auth/login`, { email, password }, { withCredentials: true }
-    );
-    setAccessToken(data.accessToken);
-    return data.accessToken;
+  async login(email: string, password: string): Promise<AuthUser> {
+    const { data } = await api.post("/auth/login", { email, password });
+    return { id: data.userId, email: data.email };
   },
 
-  async refresh(): Promise<string | null> {
+  async refresh(): Promise<AuthUser | null> {
     try {
-      const { data } = await axios.post(
-        `${BASE_API_URL}/auth/refresh`, {}, { withCredentials: true }
-      );
-      setAccessToken(data.accessToken);
-      return data.accessToken;
+      const { data } = await api.post("/auth/refresh");
+      return { id: data.userId, email: data.email };
     } catch {
-      clearAccessToken();
       return null;
     }
   },
 
-  async logout() {
-    try { await api.post('/auth/logout'); } finally { clearAccessToken(); }
+  async logout(): Promise<void> {
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      return;
+    }
   },
 };

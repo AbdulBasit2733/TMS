@@ -6,6 +6,7 @@ import {
   updateTask,
   deleteTask,
   toggleTaskStatus,
+  toggleTaskPriority,
 
 } from '../controllers/taskController';
 import { authenticate } from '../middlewares/authMiddleware';
@@ -20,5 +21,6 @@ router.get('/:id', getTaskById);
 router.patch('/:id', updateTask);
 router.delete('/:id', deleteTask);
 router.patch('/:id/toggle', toggleTaskStatus);
+router.patch('/:id/priority', toggleTaskPriority);
 
 export default router;

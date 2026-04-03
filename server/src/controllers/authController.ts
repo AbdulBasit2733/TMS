@@ -40,6 +40,7 @@ export const login = async (req: Request, res: Response) => {
       return res
         .status(400)
         .json({ error: parsed.error.issues[0]?.message ?? "Invalid payload" });
+
     const { email, password } = parsed.data;
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
@@ -51,23 +52,32 @@ export const login = async (req: Request, res: Response) => {
     const accessToken = jwt.sign(
       { userId: user.id },
       process.env.JWT_ACCESS_SECRET as string,
-      { expiresIn: "15m" },
+      { expiresIn: "15m" }
     );
     const refreshToken = jwt.sign(
       { userId: user.id },
       process.env.JWT_REFRESH_SECRET as string,
-      { expiresIn: "7d" },
+      { expiresIn: "7d" }
     );
+
+    const isProd = process.env.NODE_ENV === "production";
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000,
+    });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isProd,
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({ accessToken });
-  } catch (error) {
+    res.status(200).json({ userId: user.id, email: user.email });
+  } catch {
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -88,21 +98,37 @@ export const refresh = async (req: Request, res: Response) => {
         const newAccessToken = jwt.sign(
           { userId: decoded.userId },
           process.env.JWT_ACCESS_SECRET as string,
-          { expiresIn: "15m" },
+          { expiresIn: "15m" }
         );
-        res.status(200).json({ accessToken: newAccessToken });
-      },
+
+        res.cookie("accessToken", newAccessToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 15 * 60 * 1000,
+        });
+
+        res.status(200).json({ message: "Token refreshed" });
+      }
     );
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
 export const logout = async (req: Request, res: Response) => {
-  res.clearCookie("refreshToken", {
+  const isProd = process.env.NODE_ENV === "production";
+
+  res.clearCookie("accessToken", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isProd,
     sameSite: "strict",
   });
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: "strict",
+  });
+
   res.status(200).json({ message: "Logged out successfully" });
 };

@@ -46,23 +46,8 @@ export const taskService = {
     return data as Task;
   },
 
-  async searchAssignableUsers(taskId: string, search?: string, limit = 10): Promise<AssignableUsersResponse> {
-    const params = new URLSearchParams();
-    if (search?.trim()) params.set('search', search.trim());
-    params.set('limit', String(limit));
-
-    const query = params.toString();
-    const { data } = await api.get(`/tasks/${taskId}/assignable-users${query ? `?${query}` : ''}`);
-    return data as AssignableUsersResponse;
-  },
-
-  async assignUser(taskId: string, userId: string): Promise<Task> {
-    const { data } = await api.post(`/tasks/${taskId}/assignments`, { userId });
-    return data as Task;
-  },
-
-  async unassignUser(taskId: string, userId: string): Promise<Task> {
-    const { data } = await api.delete(`/tasks/${taskId}/assignments/${userId}`);
+  async togglePriority(id: string): Promise<Task> {
+    const { data } = await api.patch(`/tasks/${id}/priority`);
     return data as Task;
   },
 };

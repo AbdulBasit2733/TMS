@@ -53,7 +53,6 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     fetchTasks()
   }, [fetchTasks])
 
-  // ── Filter helpers ──────────────────────────────────────────────────────────
   const setSearch = useCallback((value: string) => {
     if (searchTimer.current) clearTimeout(searchTimer.current)
     searchTimer.current = setTimeout(() => {
@@ -69,7 +68,6 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     setFilters((f) => ({ ...f, page }))
   }, [])
 
-  // ── Optimistic local update helper ─────────────────────────────────────────
   const patchLocal = (id: string, patch: Partial<Task>) => {
     setState((s) => ({
       ...s,
@@ -77,7 +75,6 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     }))
   }
 
-  // ── CRUD ───────────────────────────────────────────────────────────────────
   const createTask = useCallback(
     async (input: CreateTaskInput) => {
       const task = await taskService.create(input)
@@ -107,7 +104,6 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     [fetchTasks]
   )
 
-  // Toggle via dedicated /toggle endpoint — PENDING ↔ COMPLETED
   const toggleTask = useCallback(async (id: string) => {
     const task = await taskService.toggle(id)
     patchLocal(id, { status: task.status })
@@ -115,29 +111,27 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     return task
   }, [])
 
-  // ── Inline dropdown updates ─────────────────────────────────────────────────
-  // Updates only status — optimistic UI then server confirm
+
   const updateStatus = useCallback(
     async (id: string, status: TaskStatus) => {
-      patchLocal(id, { status }) // optimistic
+      patchLocal(id, { status })
       try {
         const task = await taskService.update(id, { status })
-        patchLocal(id, { status: task.status }) // confirm with server value
+        patchLocal(id, { status: task.status })
         toast.success(`Status → ${status === 'COMPLETED' ? 'Completed' : 'Pending'}`)
       } catch {
-        fetchTasks() // rollback by refetching
+        fetchTasks()
         toast.error('Failed to update status')
       }
     },
     [fetchTasks]
   )
 
-  // Updates only priority — optimistic UI then server confirm
   const updatePriority = useCallback(
     async (id: string, priority: Priority) => {
-      patchLocal(id, { priority }) // optimistic
+      patchLocal(id, { priority })
       try {
-        const task = await taskService.update(id, { priority })
+        const task = await taskService.togglePriority(id)
         patchLocal(id, { priority: task.priority })
         toast.success(`Priority → ${priority}`)
       } catch {
@@ -147,35 +141,6 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     },
     [fetchTasks]
   )
-
-  const searchAssignableUsers = useCallback(async (taskId: string, search?: string) => {
-    const res = await taskService.searchAssignableUsers(taskId, search, 10)
-    return res.users
-  }, [])
-
-  const assignUserToTask = useCallback(async (taskId: string, userId: string) => {
-    try {
-      const updatedTask = await taskService.assignUser(taskId, userId)
-      patchLocal(taskId, updatedTask)
-      toast.success('User assigned to task')
-      return updatedTask
-    } catch {
-      toast.error('Failed to assign user')
-      throw new Error('Failed to assign user')
-    }
-  }, [])
-
-  const unassignUserFromTask = useCallback(async (taskId: string, userId: string) => {
-    try {
-      const updatedTask = await taskService.unassignUser(taskId, userId)
-      patchLocal(taskId, updatedTask)
-      toast.success('User unassigned from task')
-      return updatedTask
-    } catch {
-      toast.error('Failed to unassign user')
-      throw new Error('Failed to unassign user')
-    }
-  }, [])
 
   return {
     tasks: state.tasks,
@@ -195,8 +160,5 @@ export function useTasks(initialFilters?: Partial<TaskFilters>) {
     toggleTask,
     updateStatus,   
     updatePriority, 
-    searchAssignableUsers,
-    assignUserToTask,
-    unassignUserFromTask,
   }
 }
