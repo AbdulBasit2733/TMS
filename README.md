@@ -41,7 +41,7 @@ Make sure you have the following installed on your PC:
 
 ### 2. Clone the Repository
 ```bash
-git clone https://github.com/AbdulBasit2733/TMS/taskflow.git
+git clone https://github.com/AbdulBasit2733/TMS.git
 cd taskflow
 ```
 
