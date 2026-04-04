@@ -6,13 +6,6 @@ export interface UserSummary {
   email: string;
 }
 
-export interface TaskAssignment {
-  id: string;
-  taskId: string;
-  userId: string;
-  createdAt: string;
-  user: UserSummary;
-}
 
 export interface Task {
   id: string;
@@ -26,7 +19,6 @@ export interface Task {
   createdAt: string;
   updatedAt: string;
   userId: string;
-  assignments: TaskAssignment[];
 }
 
 export interface TaskFilters {
@@ -46,11 +38,6 @@ export interface CreateTaskInput {
   targetDate?: string;
 }
 
-export interface AssignableUsersResponse {
-  taskId: string;
-  users: UserSummary[];
-}
-
 export interface Props {
   task: Task
   onToggle: (id: string) => void
@@ -58,7 +45,4 @@ export interface Props {
   onDelete: (id: string) => void
   onStatusChange: (id: string, status: TaskStatus) => void
   onPriorityChange: (id: string, priority: Priority) => void
-  onSearchAssignableUsers: (taskId: string, search?: string) => Promise<UserSummary[]>
-  onAssignUser: (taskId: string, userId: string) => Promise<unknown>
-  onUnassignUser: (taskId: string, userId: string) => Promise<unknown>
 }

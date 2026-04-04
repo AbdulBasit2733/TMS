@@ -1,5 +1,5 @@
 import { api } from './api';
-import { AssignableUsersResponse, Task, TaskFilters, CreateTaskInput } from '@/types';
+import { Task, TaskFilters, CreateTaskInput } from '@/types';
 
 export const taskService = {
   async getAll(filters: TaskFilters) {

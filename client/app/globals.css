@@ -235,4 +235,74 @@
   html {
     @apply font-sans;
   }
+
+  @keyframes orb-drift {
+    0% {
+      transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+      transform: translate(40px, -30px) scale(1.08);
+    }
+
+    66% {
+      transform: translate(-20px, 20px) scale(0.95);
+    }
+
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+  }
+
+  @keyframes orb-drift-2 {
+    0% {
+      transform: translate(0, 0) scale(1);
+    }
+
+    40% {
+      transform: translate(-50px, 30px) scale(1.1);
+    }
+
+    80% {
+      transform: translate(25px, -15px) scale(0.92);
+    }
+
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+  }
+
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-12px);
+    }
+  }
+
+  @keyframes float-slow {
+
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+
+    50% {
+      transform: translateY(-8px) rotate(3deg);
+    }
+  }
+
+  @keyframes ticker {
+    0% {
+      transform: translateX(0);
+    }
+
+    100% {
+      transform: translateX(-50%);
+    }
+  }
 }
