@@ -4,27 +4,24 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth";
 import taskRoutes from "./routes/tasks";
+import { PORT, CLIENT_URL, isProd } from "./config/config";
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: [
-      process.env.NODE_ENV === "production"
-        ? (process.env.CLIENT_URL ?? "https://tms-frontend-12ai.onrender.com") 
-        : "http://localhost:3000",
-    ],
+    origin: isProd
+      ? (CLIENT_URL ?? "https://tms-frontend-12ai.onrender.com")
+      : "http://localhost:3000",
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    exposedHeaders: ["Set-Cookie"],
-  }),
+  })
 );
+
+app.set("trust proxy", 1);
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/tasks", taskRoutes);
